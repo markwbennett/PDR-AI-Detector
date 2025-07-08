@@ -5,6 +5,32 @@ from bs4 import BeautifulSoup
 import os
 from urllib.parse import urljoin
 
+def get_pdr_disposition(soup):
+    """Check for PDR disposition status in Case Events"""
+    case_events_panel = soup.find('div', class_='panel-heading panel-heading-content', string='Case Events')
+    if not case_events_panel:
+        return None
+    
+    # Find the parent panel and look for PDR DISP entries
+    panel = case_events_panel.parent
+    rows = panel.find_all('tr')
+    
+    for row in rows:
+        cells = row.find_all('td')
+        if len(cells) >= 2:
+            # Check if any cell contains "PDR DISP"
+            for i, cell in enumerate(cells):
+                if 'PDR DISP' in cell.get_text().upper():
+                    # Check the next cell for disposition
+                    if i + 1 < len(cells):
+                        next_cell_text = cells[i + 1].get_text().strip()
+                        if 'GRANTED' in next_cell_text.upper():
+                            return 'granted'
+                        elif 'REFUSED' in next_cell_text.upper():
+                            return 'refused'
+    
+    return None
+
 def test_single_case(case_number):
     """Test scraping a single case to verify the logic works"""
     base_url = "https://search.txcourts.gov"
@@ -19,6 +45,13 @@ def test_single_case(case_number):
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
+        # Check for PDR disposition status
+        pdr_disposition = get_pdr_disposition(soup)
+        if pdr_disposition:
+            print(f"✓ Found PDR disposition: {pdr_disposition}")
+        else:
+            print("- No PDR disposition found")
+        
         # Check for Case Events section
         case_events_panel = soup.find('div', class_='panel-heading panel-heading-content', string='Case Events')
         if case_events_panel:
@@ -32,7 +65,12 @@ def test_single_case(case_number):
             for link in petition_links:
                 next_cell = link.parent.find_next_sibling('td')
                 if next_cell and 'PETITION' in next_cell.get_text().upper():
+                    if pdr_disposition:
+                        filename = f"PD-{case_number:04d}-24 PDR ({pdr_disposition}).pdf"
+                    else:
+                        filename = f"PD-{case_number:04d}-24 PDR.pdf"
                     print(f"✓ Found PETITION document: {link['href']}")
+                    print(f"  Would save as: {filename}")
                     petition_found = True
                     break
             
@@ -68,6 +106,7 @@ def test_single_case(case_number):
                                 next_cell = link.parent.find_next_sibling('td')
                                 if next_cell and 'BRIEF' in next_cell.get_text().upper() and 'NOTICE' not in next_cell.get_text().upper():
                                     print(f"✓ Found Brief document: {link['href']}")
+                                    print(f"  Would save as: PD-{case_number:04d}-24 Brief.pdf")
                                     brief_found = True
                                     break
                         break
