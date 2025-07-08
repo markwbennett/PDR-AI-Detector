@@ -43,8 +43,8 @@ def download_file(url, filename):
 
 def get_pdr_disposition(soup):
     """Check for PDR disposition status in Case Events table"""
-    # Find the Case Events section
-    case_events_div = soup.find('div', class_='panel-heading panel-heading-content', string='Case Events')
+    # Find the Case Events section - look for div containing "Case Events" text
+    case_events_div = soup.find('div', class_=['panel-heading', 'panel-heading-content'], string=lambda text: text and 'Case Events' in text.strip())
     if not case_events_div:
         return None
     
@@ -73,8 +73,8 @@ def get_pdr_disposition(soup):
 
 def find_petition_document(soup):
     """Find PETITION document in Case Events table"""
-    # Find the Case Events section
-    case_events_div = soup.find('div', class_='panel-heading panel-heading-content', string='Case Events')
+    # Find the Case Events section - look for div containing "Case Events" text
+    case_events_div = soup.find('div', class_=['panel-heading', 'panel-heading-content'], string=lambda text: text and 'Case Events' in text.strip())
     if not case_events_div:
         return None
     
@@ -112,8 +112,8 @@ def find_petition_document(soup):
 
 def find_appellant_brief(soup):
     """Find Appellant brief in Appellate Briefs table"""
-    # Find the Appellate Briefs section
-    briefs_div = soup.find('div', class_='panel-heading panel-heading-content', string='Appellate Briefs')
+    # Find the Appellate Briefs section - look for div containing "Appellate Briefs" text
+    briefs_div = soup.find('div', class_=['panel-heading', 'panel-heading-content'], string=lambda text: text and 'Appellate Briefs' in text.strip())
     if not briefs_div:
         return None
     
