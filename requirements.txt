@@ -1,0 +1,4 @@
+# Add project dependencies here
+# Example:
+# requests>=2.25.0
+# numpy>=1.21.0 
