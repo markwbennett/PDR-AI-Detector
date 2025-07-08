@@ -194,7 +194,7 @@ def test_single_case(case_number):
 
 if __name__ == "__main__":
     # Test with a few case numbers
-    test_cases = [1, 50, 100, 500, 1000]
+    test_cases = [1, 50, 100, 451, 500, 1000]
     
     for case_num in test_cases:
         test_single_case(case_num)
