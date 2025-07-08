@@ -23,7 +23,7 @@ def main():
             print("Cancelled.")
     elif choice == "2":
         print("\nRunning test scraper...")
-        os.system("python test_scraper.py")
+        os.system("./.venv/bin/python test_scraper.py")
     elif choice == "3":
         print("Goodbye!")
     else:
