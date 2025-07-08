@@ -89,6 +89,51 @@ def find_petition_document(soup):
     
     return None
 
+def find_appellant_brief(soup):
+    """Find Appellant brief in Appellate Briefs table"""
+    # Find the Appellate Briefs section
+    briefs_div = soup.find('div', class_='panel-heading panel-heading-content', string='Appellate Briefs')
+    if not briefs_div:
+        return None
+    
+    # Find the table with briefs
+    panel = briefs_div.parent
+    table = panel.find('table', class_='rgMasterTable')
+    if not table:
+        return None
+    
+    # Look through table rows
+    rows = table.find('tbody').find_all('tr') if table.find('tbody') else []
+    
+    for row in rows:
+        cells = row.find_all('td')
+        if len(cells) >= 4:
+            # Check columns: Date, Event Type, Description, Document
+            event_type = cells[1].get_text().strip()
+            description = cells[2].get_text().strip()
+            
+            # Look for "BRIEF FILED" by "Appellant"
+            if event_type == "BRIEF FILED" and description == "Appellant":
+                # Check the document cell (4th column)
+                doc_cell = cells[3]
+                
+                # Look for nested document table
+                doc_table = doc_cell.find('table', class_='docGrid')
+                if doc_table:
+                    doc_rows = doc_table.find_all('tr')
+                    for doc_row in doc_rows:
+                        doc_cells = doc_row.find_all('td')
+                        if len(doc_cells) >= 2:
+                            # Check if this row contains Brief (not Notice)
+                            doc_type = doc_cells[1].get_text().strip()
+                            if 'BRIEF' in doc_type.upper() and 'NOTICE' not in doc_type.upper():
+                                # Get the link from the first cell
+                                link = doc_cells[0].find('a')
+                                if link and link.get('href'):
+                                    return link['href']
+    
+    return None
+
 def test_single_case(case_number):
     """Test scraping a single case to verify the logic works"""
     base_url = "https://search.txcourts.gov"
@@ -130,38 +175,16 @@ def test_single_case(case_number):
             print("✗ Case Events section not found")
         
         # Check for Appellate Briefs section
-        briefs_panel = soup.find('div', class_='panel-heading panel-heading-content', string='Appellate Briefs')
-        if briefs_panel:
+        briefs_div = soup.find('div', class_='panel-heading panel-heading-content', string='Appellate Briefs')
+        if briefs_div:
             print("✓ Found Appellate Briefs section")
             
-            # Find the parent panel and look for brief documents
-            panel = briefs_panel.parent
-            brief_rows = panel.find_all('tr')
-            
-            brief_found = False
-            for row in brief_rows:
-                cells = row.find_all('td')
-                if len(cells) >= 3:
-                    event_type = cells[1].get_text().strip()
-                    description = cells[2].get_text().strip()
-                    
-                    if event_type == "BRIEF FILED" and description == "Appellant":
-                        print(f"✓ Found BRIEF FILED by Appellant")
-                        
-                        # Look for the brief document link
-                        doc_cell = cells[3] if len(cells) > 3 else None
-                        if doc_cell:
-                            doc_links = doc_cell.find_all('a', href=True)
-                            for link in doc_links:
-                                next_cell = link.parent.find_next_sibling('td')
-                                if next_cell and 'BRIEF' in next_cell.get_text().upper() and 'NOTICE' not in next_cell.get_text().upper():
-                                    print(f"✓ Found Brief document: {link['href']}")
-                                    print(f"  Would save as: PD-{case_number:04d}-24 Brief.pdf")
-                                    brief_found = True
-                                    break
-                        break
-            
-            if not brief_found:
+            # Look for Appellant brief
+            brief_link = find_appellant_brief(soup)
+            if brief_link:
+                print(f"✓ Found Appellant Brief: {brief_link}")
+                print(f"  Would save as: PD-{case_number:04d}-24 Brief.pdf")
+            else:
                 print("✗ No Appellant Brief found")
         else:
             print("✗ Appellate Briefs section not found")
