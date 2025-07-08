@@ -7,10 +7,25 @@ import time
 from urllib.parse import urljoin
 import random
 
+# Create a session with browser-like headers
+session = requests.Session()
+session.headers.update({
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Cache-Control': 'max-age=0'
+})
+
 def download_file(url, filename):
     """Download a file from URL and save it locally"""
     try:
-        response = requests.get(url, timeout=30)
+        response = session.get(url, timeout=30)
         response.raise_for_status()
         
         # Create downloads directory if it doesn't exist
@@ -76,7 +91,7 @@ def scrape_case(case_number):
     base_url = "https://search.txcourts.gov"
     case_url = f"{base_url}/Case.aspx?cn=PD-{case_number:04d}-24&coa=coscca"
     
-    response = requests.get(case_url, timeout=30)
+    response = session.get(case_url, timeout=30)
     response.raise_for_status()
     
     soup = BeautifulSoup(response.content, 'html.parser')

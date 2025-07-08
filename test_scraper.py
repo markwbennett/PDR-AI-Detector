@@ -5,6 +5,21 @@ from bs4 import BeautifulSoup
 import os
 from urllib.parse import urljoin
 
+# Create a session with browser-like headers
+session = requests.Session()
+session.headers.update({
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Cache-Control': 'max-age=0'
+})
+
 def get_pdr_disposition(soup):
     """Check for PDR disposition status in Case Events"""
     case_events_panel = soup.find('div', class_='panel-heading panel-heading-content', string='Case Events')
@@ -40,7 +55,7 @@ def test_single_case(case_number):
     print(f"URL: {case_url}")
     
     try:
-        response = requests.get(case_url, timeout=30)
+        response = session.get(case_url, timeout=30)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.content, 'html.parser')
